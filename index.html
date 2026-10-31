@@ -1,0 +1,26 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team 2 Watchtower</title>
+<style>body{font-family:system-ui,sans-serif;background:#FAFAF9;color:#18181B;max-width:900px;margin:auto;padding:16px}
+h1{margin-bottom:0}small{color:#666}table{width:100%;border-collapse:collapse;margin:8px 0 24px}td,th{border-bottom:1px solid #DEDDD8;padding:6px;text-align:left;font-size:14px}
+.up{color:#008300;font-weight:bold}.down{color:#c00;font-weight:bold}.esc{color:#c00;font-weight:bold}.ping{color:#2A78D6;font-weight:bold}.box{background:#fff;border:1px solid #DEDDD8;border-radius:8px;padding:12px;margin:12px 0}</style></head>
+<body><h1>Team 2 Watchtower</h1><small>v0.1 &middot; keeps Team 2 delivering and online &middot; source: github.com/leonptucker3886-lab/team2-watchtower</small>
+<div class="box"><h2>Escalation engine: actions taken</h2><p>Every automatic ping and escalation, newest first, read live from <code>escalations.json</code> on main. No human is involved: members silent &gt;60 min are pinged, and if still silent on the next run they are escalated to the Announcer.</p>
+<div id="esum"></div><table><thead><tr><th>When (UTC)</th><th>Action</th><th>Member</th><th>Escalated to</th><th>Silent for</th><th>Channel / link</th></tr></thead><tbody id="esc"><tr><td colspan="6">Loading…</td></tr></tbody></table></div>
+<div class="box"><h2>Deploy Checker: Team 2 sites</h2><p>Checked from your browser when this page loads.</p>
+<table><thead><tr><th>Project</th><th>URL</th><th>Status</th><th>Time</th></tr></thead><tbody id="sites"></tbody></table></div>
+<script>
+const RAW="https://raw.githubusercontent.com/leonptucker3886-lab/team2-watchtower/main/";
+const SITES=[["StoryForge Kids","https://storyforge-kids-beryl.vercel.app"],["CastCrew","https://castcrew-leonptucker3886-labs-projects.vercel.app"],["AgentLedger","https://agentledger-tan.vercel.app"],["PlaytestPilot","https://playtestpilot.vercel.app"],["LinkKeeper","https://linkkeeper-navy.vercel.app"]];
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+async function loadEsc(){const tb=document.getElementById("esc");try{const r=await fetch(RAW+"escalations.json?t="+Date.now(),{cache:"no-store"});
+if(!r.ok){tb.innerHTML='<tr><td colspan="6">No actions logged yet (escalations.json not on main yet). The engine writes here on every run.</td></tr>';return}
+let d=await r.json();d=Array.isArray(d)?d:(d.actions||d.escalations||[]);d.sort((a,b)=>String(b.timestamp||b.time||"").localeCompare(String(a.timestamp||a.time||"")));
+const p=d.filter(x=>/ping|issue/i.test(x.action||x.type||"")).length,e=d.filter(x=>/escal/i.test(x.action||x.type||"")).length;
+document.getElementById("esum").innerHTML=`<b>${d.length}</b> actions: <span class="ping">${p} pings</span>, <span class="esc">${e} escalations</span>`;
+tb.innerHTML=d.length?d.map(x=>{const a=x.action||x.type||"";const cls=/escal/i.test(a)?"esc":"ping";const l=x.url||x.link||x.issue_url;
+return `<tr><td>${esc(x.timestamp||x.time)}</td><td class="${cls}">${esc(a)}</td><td>${esc(x.member||x.member_name||x.user)}</td><td>${esc(x.escalated_to||x.to||"")}</td><td>${esc(x.silent_minutes!=null?x.silent_minutes+" min":"")}</td><td>${l?`<a href="${esc(l)}">${esc(x.channel||"link")}</a>`:esc(x.channel||"")}</td></tr>`}).join(""):'<tr><td colspan="6">Engine has run; no one silent, no actions needed.</td></tr>'}
+catch(err){tb.innerHTML='<tr><td colspan="6">Could not read escalations.json: '+esc(err.message)+'</td></tr>'}}
+async function check(n,u){const t=performance.now();let ok=false;try{const c=new AbortController();setTimeout(()=>c.abort(),15000);await fetch(u,{mode:"no-cors",cache:"no-store",signal:c.signal});ok=true}catch(e){}
+return `<tr><td>${n}</td><td><a href="${u}">${u.replace("https://","")}</a></td><td class="${ok?"up":"down"}">${ok?"UP":"DOWN"}</td><td>${((performance.now()-t)/1000).toFixed(1)}s</td></tr>`}
+loadEsc();setInterval(loadEsc,60000);Promise.all(SITES.map(s=>check(...s))).then(r=>document.getElementById("sites").innerHTML=r.join(""));
+</script></body></html>

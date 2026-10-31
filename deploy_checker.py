@@ -9,10 +9,10 @@ import argparse, json, sys, time, urllib.request, urllib.error
 
 DEFAULT_TARGETS = {
     "PlaytestPilot": "https://playtestpilot.vercel.app",
-    "StoryForge Kids": "https://storyforge.leonlink.net",
+    "StoryForge Kids": "https://storyforge-kids-beryl.vercel.app",
     "CastCrew": "https://castcrew-leonptucker3886-labs-projects.vercel.app",
-    "AgentLedger": "https://agentledger.leonlink.net",
-    "LinkKeeper": "https://linkkeeper.leonlink.net",
+    "AgentLedger": "https://agentledger-tan.vercel.app",
+    "LinkKeeper": "https://linkkeeper-navy.vercel.app",
 }
 
 

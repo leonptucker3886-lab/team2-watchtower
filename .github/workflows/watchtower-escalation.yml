@@ -1,0 +1,42 @@
+name: Watchtower auto-escalation
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  push:
+    branches: [ci/silence-catcher-tests]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: write
+  issues: write
+concurrency: watchtower-escalation
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pytest && pytest -v test_silence_catcher.py test_escalation_engine.py
+  escalate:
+    needs: test
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Ping and escalate silent members
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ZENZAP_API_TOKEN: ${{ secrets.ZENZAP_API_TOKEN }}
+          ZENZAP_TOPIC_ID: ${{ secrets.ZENZAP_TOPIC_ID }}
+        run: python escalation_engine.py
+      - name: Commit escalations.json
+        run: |
+          git config user.name "watchtower-bot"
+          git config user.email "watchtower-bot@users.noreply.github.com"
+          git add escalations.json
+          git diff --cached --quiet || (git commit -m "watchtower: log escalation actions [skip ci]" && git push)
